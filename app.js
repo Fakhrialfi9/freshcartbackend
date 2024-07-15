@@ -10,7 +10,6 @@ import morgan from "morgan";
 import router from "./routes/routes.js";
 import mongoSanitize from "express-mongo-sanitize";
 import helmet from "helmet";
-
 import { errorHandler, notFound } from "./middleware/errorhandler.js";
 import { sendOTPByPhoneNumber, verifyOTPByPhoneNumber } from "./controllers/OTPByPhoneNumberControllers.js";
 import { sendOTPByEmail, verifyOTPByEmail } from "./controllers/OTPByEmailControllers.js";
