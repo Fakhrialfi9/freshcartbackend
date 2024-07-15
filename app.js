@@ -49,7 +49,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Logging middleware (use only in development environment)
-if (process.env.NODE_ENV === "development") {
+if (process.env.NODE_ENV === "production") {
   app.use(morgan("dev"));
 }
 
