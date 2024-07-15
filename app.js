@@ -29,6 +29,9 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
+// Mengaktifkan trust proxy
+app.set("trust proxy", true);
+
 // Security middleware
 app.use(helmet());
 app.use(mongoSanitize());
@@ -47,6 +50,9 @@ app.use(
     },
   }),
 );
+
+// favicon
+app.get("/favicon.ico", (req, res) => res.status(204));
 
 // Middleware untuk parsing application/json
 app.use(express.json());
