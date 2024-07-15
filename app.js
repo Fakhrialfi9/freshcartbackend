@@ -8,10 +8,9 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
 import router from "./routes/routes.js";
-import csrf from "csurf";
 import mongoSanitize from "express-mongo-sanitize";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit";
+import { rateLimit } from "express-rate-limit";
 import { errorHandler, notFound } from "./middleware/errorhandler.js";
 import { sendOTPByPhoneNumber, verifyOTPByPhoneNumber } from "./controllers/OTPByPhoneNumberControllers.js";
 import { sendOTPByEmail, verifyOTPByEmail } from "./controllers/OTPByEmailControllers.js";
@@ -19,55 +18,68 @@ import { sendOTPByEmail, verifyOTPByEmail } from "./controllers/OTPByEmailContro
 dotenv.config();
 
 const app = express();
-const csrfProtection = csrf();
 const port = process.env.PORT || 3000;
 
+// Rate limiting middleware
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
+  windowMs: 15 * 60 * 1000, // 15 menit
+  max: 100, // maksimum 100 permintaan per windowMs
+  standardHeaders: "draft-7", // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
 });
-
-// Middleware
 app.use(limiter);
+
+// Security middleware
 app.use(helmet());
 app.use(mongoSanitize());
-app.use(csrfProtection);
-app.use(express.json());
 app.use(cors());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-if (process.env.NODE_ENV === "development") {
-  app.use(morgan("dev"));
-}
 
-// Set X-Frame-Options header
-app.use((req, res, next) => {
-  res.setHeader("X-Frame-Options", "SAMEORIGIN");
-  next();
-});
-
-// Configure session
+// Session configuration
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: process.env.NODE_ENV === "production" ? true : false },
+    cookie: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    },
   }),
 );
 
-// Endpoint untuk root
+// Middleware untuk parsing application/json
+app.use(express.json());
+
+// Middleware untuk parsing application/x-www-form-urlencoded
+app.use(express.urlencoded({ extended: true }));
+
+// Middleware untuk cookie-parser
+app.use(cookieParser());
+
+// Logging middleware (gunakan hanya di environment development)
+if (process.env.NODE_ENV === "development") {
+  app.use(morgan("dev"));
+}
+
+// Set X-Frame-Options header untuk mengatasi clickjacking
+app.use((req, res, next) => {
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  next();
+});
+
+// Route untuk endpoint root
 app.get("/api/v1", (req, res) => {
   res.send("API is working");
 });
 
-// Gunakan router OTP Phone Number
+// Route untuk OTP Phone Number
 app.use("/api/v1/auth/phone", sendOTPByPhoneNumber, verifyOTPByPhoneNumber);
 
-// Gunakan router OTP Email
+// Route untuk OTP Email
 app.use("/api/v1/auth/email", sendOTPByEmail);
 
-// Gunakan router untuk verifikasi OTP Email
+// Route untuk verifikasi OTP Email
 app.use("/api/v1/auth/verify", verifyOTPByEmail);
 
 // Gunakan router yang didefinisikan di routes.js
@@ -87,7 +99,7 @@ mongoose
     console.error("MongoDB connection error:", error);
   });
 
-// Redirect if top !== self
+// Redirect dari HTTP ke HTTPS di environment production
 if (process.env.NODE_ENV === "production") {
   app.use((req, res, next) => {
     if (req.headers["x-forwarded-proto"] !== "https") {
