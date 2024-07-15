@@ -10,7 +10,6 @@ import morgan from "morgan";
 import router from "./routes/routes.js";
 import mongoSanitize from "express-mongo-sanitize";
 import helmet from "helmet";
-import { rateLimit } from "express-rate-limit";
 import { errorHandler, notFound } from "./middleware/errorhandler.js";
 import { sendOTPByPhoneNumber, verifyOTPByPhoneNumber } from "./controllers/OTPByPhoneNumberControllers.js";
 import { sendOTPByEmail, verifyOTPByEmail } from "./controllers/OTPByEmailControllers.js";
@@ -19,15 +18,6 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
-
-// Rate limiting middleware
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 menit
-  max: 100, // maksimum 100 permintaan per windowMs
-  standardHeaders: "draft-7", // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
-});
-app.use(limiter);
 
 // Security middleware
 app.use(helmet());
