@@ -1,5 +1,4 @@
-// app.js
-
+// Import necessary modules
 import express from "express";
 import session from "express-session";
 import cors from "cors";
@@ -14,15 +13,17 @@ import { errorHandler, notFound } from "./middleware/errorhandler.js";
 import { sendOTPByPhoneNumber, verifyOTPByPhoneNumber } from "./controllers/OTPByPhoneNumberControllers.js";
 import { sendOTPByEmail, verifyOTPByEmail } from "./controllers/OTPByEmailControllers.js";
 
+// Load environment variables
 dotenv.config();
 
+// Initialize Express app
 const app = express();
 const port = process.env.PORT || 3000;
 
 // Security middleware
-app.use(helmet());
-app.use(mongoSanitize());
-app.use(cors());
+app.use(helmet()); // Set various HTTP headers for security
+app.use(mongoSanitize()); // Prevent MongoDB Operator Injection
+app.use(cors()); // Enable Cross-Origin Resource Sharing (CORS)
 
 // Session configuration
 app.use(
@@ -31,55 +32,55 @@ app.use(
     resave: false,
     saveUninitialized: true,
     cookie: {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      httpOnly: true, // Prevent client-side JavaScript access to cookies
+      secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+      sameSite: "strict", // Mitigate CSRF attacks by asserting same-site
     },
   }),
 );
 
-// Middleware untuk parsing application/json
+// Middleware for parsing application/json
 app.use(express.json());
 
-// Middleware untuk parsing application/x-www-form-urlencoded
+// Middleware for parsing application/x-www-form-urlencoded
 app.use(express.urlencoded({ extended: true }));
 
-// Middleware untuk cookie-parser
+// Middleware for cookie parsing
 app.use(cookieParser());
 
-// Logging middleware (gunakan hanya di environment development)
+// Logging middleware (use only in development environment)
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
 
-// Set X-Frame-Options header untuk mengatasi clickjacking
+// Set X-Frame-Options header to mitigate clickjacking
 app.use((req, res, next) => {
   res.setHeader("X-Frame-Options", "SAMEORIGIN");
   next();
 });
 
-// Route untuk endpoint root
+// Route for root endpoint
 app.get("/api/v1", (req, res) => {
   res.send("API is working");
 });
 
-// Route untuk OTP Phone Number
+// Routes for OTP Phone Number
 app.use("/api/v1/auth/phone", sendOTPByPhoneNumber, verifyOTPByPhoneNumber);
 
-// Route untuk OTP Email
+// Route for OTP Email
 app.use("/api/v1/auth/email", sendOTPByEmail);
 
-// Route untuk verifikasi OTP Email
+// Route for verifying OTP Email
 app.use("/api/v1/auth/verify", verifyOTPByEmail);
 
-// Gunakan router yang didefinisikan di routes.js
+// Use router defined in routes.js
 app.use("/api/v1/auth", router);
 
-// Middleware untuk penanganan error
-app.use(errorHandler);
-app.use(notFound);
+// Middleware for error handling
+app.use(notFound); // Handle 404 errors
+app.use(errorHandler); // Centralized error handling
 
-// Hubungkan ke MongoDB
+// Connect to MongoDB
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
@@ -89,7 +90,7 @@ mongoose
     console.error("MongoDB connection error:", error);
   });
 
-// Mulai server
+// Start the server
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
