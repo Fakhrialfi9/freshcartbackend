@@ -29,9 +29,6 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Mengaktifkan trust proxy
-app.set("trust proxy", true);
-
 // Security middleware
 app.use(helmet());
 app.use(mongoSanitize());
@@ -50,9 +47,6 @@ app.use(
     },
   }),
 );
-
-// favicon
-app.get("/favicon.ico", (req, res) => res.status(204));
 
 // Middleware untuk parsing application/json
 app.use(express.json());
@@ -104,16 +98,6 @@ mongoose
   .catch((error) => {
     console.error("MongoDB connection error:", error);
   });
-
-// Redirect dari HTTP ke HTTPS di environment production
-if (process.env.NODE_ENV === "production") {
-  app.use((req, res, next) => {
-    if (req.headers["x-forwarded-proto"] !== "https") {
-      return res.redirect(["https://", req.get("Host"), req.url].join(""));
-    }
-    next();
-  });
-}
 
 // Mulai server
 app.listen(port, () => {
