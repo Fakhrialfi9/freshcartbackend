@@ -121,18 +121,37 @@ export const SignupUserProfileSetup = asyncHandler(async (req, res) => {
 
   const { avatarUser, userName, bio } = req.body;
 
-  const existingUserName = await User.findOne({ userName });
-  if (existingUserName) {
-    return res.status(400).json({ message: "Username already exists" });
+  const file = req.file;
+
+  try {
+    // Validasi apakah userName sudah ada
+    const existingUserName = await User.findOne({ userName });
+    if (existingUserName) {
+      return res.status(400).json({ message: "Username already exists" });
+    }
+
+    // Validasi apakah file ada
+    if (!file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    // Simpan file avatarUser dan path-nya
+    const imageFileName = file.filename;
+    const pathImageFile = `/user/avatarUser/${imageFileName}`;
+
+    saveSignupData(req, {
+      avatarUser: pathImageFile,
+      userName,
+      bio,
+    });
+
+    // Berikan respons berhasil
+    res.status(200).json({ message: "Profile setup saved", data: saveSignupData });
+  } catch (error) {
+    console.error("SignupUserProfileSetup error:", error);
+    // Berikan respons gagal dengan status dan pesan yang sesuai
+    res.status(500).json({ message: "Failed to save profile setup", error: error.message });
   }
-
-  saveSignupData(req, {
-    avatarUser,
-    userName,
-    bio,
-  });
-
-  res.status(200).json({ message: "Profile setup saved" });
 });
 
 /**

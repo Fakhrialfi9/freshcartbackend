@@ -7,19 +7,19 @@ const getSignupData = (req) => {
 
 // Define required signup steps
 const requiredSteps = [
-  "firstName",
-  "lastName",
-  "email",
-  "password",
-  "phoneNumber",
-  "address",
-  "city",
-  "state",
-  "country",
-  "postalCode",
-  "avatarUser",
-  "userName",
-  "bio",
+  // "firstName",
+  // "lastName",
+  // "email",
+  // "password",
+  // "phoneNumber",
+  // "address",
+  // "city",
+  // "state",
+  // "country",
+  // "postalCode",
+  // "avatarUser",
+  // "userName",
+  // "bio",
 ];
 
 export const ensurePreviousStepsCompleted = (req, res, next) => {

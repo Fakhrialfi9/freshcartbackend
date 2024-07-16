@@ -3,6 +3,14 @@
 import User from "../../models/User.js";
 import jwt from "jsonwebtoken";
 import asyncHandler from "../../middleware/asyncHandler.js";
+import rateLimit from "express-rate-limit";
+
+// Definisikan rate limit untuk membatasi percobaan login yang gagal
+const limiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 jam
+  max: 3, // Maksimum 3 percobaan dalam rentang waktu tersebut
+  message: "Too many login attempts from this IP, please try again later.",
+});
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1d" });
@@ -50,3 +58,5 @@ export const SigninUser = asyncHandler(async (req, res) => {
     throw new Error("Invalid email or Password");
   }
 });
+
+export const SigninUserLimited = [limiter, SigninUser];

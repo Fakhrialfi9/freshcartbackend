@@ -1,6 +1,7 @@
 // routes.js
 
 import express from "express";
+import { rateLimit } from "express-rate-limit";
 import {
   SignupUserBasicInformation,
   SignupUserContactInformation,
@@ -8,7 +9,8 @@ import {
   SignupUserAuthentication,
   SignupUserSecurityQuestion,
 } from "../controllers/auth/signup.js";
-import { SigninUser } from "../controllers/auth/signin.js";
+import { upload } from "../utils/uploadFileHandlers.js";
+import { SigninUser, SigninUserLimited } from "../controllers/auth/signin.js";
 import { SignoutUser } from "../controllers/auth/signout.js";
 import { getUser } from "../controllers/auth/getuser.js";
 import { sendOTPByPhoneNumber, verifyOTPByPhoneNumber } from "../controllers/OTPByPhoneNumberControllers.js";
@@ -18,23 +20,30 @@ import { ensurePreviousStepsCompleted } from "../middleware/ensurePreviousStepsC
 
 const router = express.Router();
 
+// Definisikan rate limit untuk membatasi percobaan login yang gagal
+const limiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 jam
+  max: 3, // Maksimum 3 percobaan dalam rentang waktu tersebut
+  message: "Too many login attempts from this IP, please try again later.",
+});
+
 // POST /api/v1/auth/signup/basic-information
-router.post("/signup/basicinformation", SignupUserBasicInformation);
+router.post("/signup/basicinformation", ensurePreviousStepsCompleted, SignupUserBasicInformation);
 
 // POST /api/v1/auth/signup/contact-information
-router.post("/signup/contactinformation", SignupUserContactInformation);
+router.post("/signup/contactinformation", ensurePreviousStepsCompleted, SignupUserContactInformation);
 
 // POST /api/v1/auth/signup/profile-setup
-router.post("/signup/profilesetup", SignupUserProfileSetup);
+router.post("/signup/profilesetup", ensurePreviousStepsCompleted, upload.single("avatarUser"), SignupUserProfileSetup);
 
 // POST /api/v1/auth/signup/security-question
-router.post("/signup/securityquestion", SignupUserSecurityQuestion);
+router.post("/signup/securityquestion", ensurePreviousStepsCompleted, SignupUserSecurityQuestion);
 
 // POST /api/v1/auth/signup/authentication
 router.post("/signup/authentication", ensurePreviousStepsCompleted, SignupUserAuthentication);
 
 // POST /api/v1/auth/signin
-router.post("/signin", SigninUser);
+router.post("/signin", limiter, SigninUserLimited, SigninUser);
 
 // GET /api/v1/auth/signout
 router.get("/signout", SignoutUser);
