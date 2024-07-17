@@ -10,6 +10,7 @@ import router from "./routes/routes.js";
 import mongoSanitize from "express-mongo-sanitize";
 import helmet from "helmet";
 import crypto from "crypto";
+import { rateLimit } from "express-rate-limit";
 import { errorHandler, notFound } from "./middleware/errorhandler.js";
 import { sendOTPByPhoneNumber, verifyOTPByPhoneNumber } from "./controllers/OTPByPhoneNumberControllers.js";
 import { sendOTPByEmail, verifyOTPByEmail } from "./controllers/OTPByEmailControllers.js";
@@ -18,6 +19,14 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+// Rate limiter middleware setup
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  standardHeaders: "draft-7", // specifying standard headers
+  legacyHeaders: false, // using modern header handling
+});
 
 // Function to encrypt text using AES
 const encryptText = (text) => {
@@ -30,6 +39,7 @@ const encryptText = (text) => {
 };
 
 // Middleware setup
+app.use(limiter); // Apply rate limiter
 app.use(helmet()); // Enhance security with Helmet
 app.use(mongoSanitize()); // Prevent MongoDB injection attacks
 app.use(express.json()); // Parse JSON bodies
@@ -43,6 +53,9 @@ if (process.env.NODE_ENV === "production") {
   app.use(morgan("dev"));
 }
 
+// Set trust proxy untuk mendukung X-Forwarded-For header
+app.set("trust proxy", true);
+
 // Generate and encrypt SESSION_SECRET
 const { encrypted: sessionSecretEncrypted, key: sessionKey, iv: sessionIV } = encryptText(process.env.SESSION_SECRET);
 app.use(
@@ -53,6 +66,12 @@ app.use(
     cookie: { secure: false }, // Cookie options
   }),
 );
+
+// Set X-Frame-Options header to mitigate clickjackings
+app.use((req, res, next) => {
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  next();
+});
 
 // Simulate storedHash (replace with actual value from the appropriate source)
 let storedHash = process.env.STORED_HASH;
