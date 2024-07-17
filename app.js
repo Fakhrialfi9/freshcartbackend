@@ -53,6 +53,9 @@ if (process.env.NODE_ENV === "production") {
   app.use(morgan("dev"));
 }
 
+// Set trust proxy untuk mendukung X-Forwarded-For header
+app.set("trust proxy", true);
+
 // Generate and encrypt SESSION_SECRET
 const { encrypted: sessionSecretEncrypted, key: sessionKey, iv: sessionIV } = encryptText(process.env.SESSION_SECRET);
 app.use(
