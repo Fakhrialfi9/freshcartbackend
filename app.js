@@ -46,7 +46,8 @@ app.use(express.json()); // Parse JSON bodies
 app.use(cors()); // Enable CORS
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 app.use(cookieParser()); // Parse cookies
-app.use(express.static("public")); // express.static
+// app.use(express.static("public")); // express.static
+app.use(express.static(path.join(__dirname, "public"))); // express.static
 
 // Use Morgan in development environment for HTTP request logging
 if (process.env.NODE_ENV === "production") {
